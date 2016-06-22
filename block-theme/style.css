@@ -1,0 +1,38 @@
+body {
+    font-family: Ubuntu;
+    width: 80%;
+    margin: auto;
+}
+
+div {
+    text-align: left;
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+h1 {
+    font-size: 32pt;
+}
+
+h2 {
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+}
+
+a {
+    color: blue;
+    text-decoration: none;
+}
+
+small {
+    color: grey;
+}
+
+li {
+    list-style-type: none;
+}
+
+p {
+    padding-top: 0px;
+    margin-top: 0px;
+}
