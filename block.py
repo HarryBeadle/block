@@ -1,61 +1,104 @@
+#!/env/python
+
+# Block
+# A static Website generator
+
+# Harry Beadle 2016 
+# www.harrybeadle.co.uk
+
 import os
 
-# Find valid subdirectories
-valid = []
-for folder in [x[0] for x in os.walk('.')]:
-    if folder.count('/') == 1 and folder.count('.') == 1:
-        valid.append(folder[2:])
-with open("block-ignore") as i:
-    for subdir in i:
-        if subdir.replace('\n', '') in valid:
-            valid.remove(subdir.replace('\n', ''))
+########################
+### Define functions ###
+########################
 
-# Output the <head>
-print "<html><head><title>", "Harry Beadle", "</title>"
-print "<link rel=\"stylesheet\" href=\"block-theme/style.css\"></head><body>"
+def alias_replace(content, alias_dict):
+	# Replaces tags with aliases from alias_dict in content
+	for A in alias_dict:
+		if A in content:
+			replacement = os.popen(alias_dict[A]).read()
+			if replacement[-1] == "\n":
+				replacement = replacement[0:-1]
+			content = content.replace(A, replacement)
+	return content
+
+def tab_in(content, index):
+	# Adds (index) number of tabs to each line of a string
+	content = content.split("\n")
+	result = []
+	for line in content:
+		result.append(index * "\t" + line)
+	return "\n".join(result)
+
+###########################
+### Get associated data ###
+###########################
 
 # Get the global aliases
-global_aliases = ["%link%"]
-global_aliases_dict = {
-    "%link%": "echo DIR_ERROR"
+global_dict = {
+	"%link%": "echo DIR_ERROR",
 }
-with open("block-global") as g:
-    for line in g:
-        global_aliases.append(line.split(":")[0])
-        global_aliases_dict[line.split(":")[0]] = line.split(":")[1]
+with open("block-global") as block_global:
+	for line in block_global:
+		tag, command = line.split(":")
+		global_dict[tag] = command
 
-# Output the header.html
+# Get a list of valid subdirectories
+valid_directories = []
+subdirectories = [x[0] for x in os.walk('.')]
+for folder in subdirectories:
+	if folder.count("/") == 1 and folder.count(".") == 1:
+		valid_directories.append(folder[2:])
+with open("block-ignore") as ignored_directories:
+	for directory in ignored_directories:
+		directory = directory.replace("\n", "")
+		if directory in valid_directories:
+			valid_directories.remove(directory)
+
+################################
+### Output the HTML document ###
+################################
+
+# Start the HTML document
+print """<html>
+\t<head>"""
+
+# Output head.html
+with open("block-theme/head.html") as head_file:
+	print tab_in(alias_replace(head_file.read(), global_dict), 2)
+
+# Finish the <head> and start the <body>
+print """\t</head>
+	<body>"""
+
+# Output header.html
 with open("block-theme/header.html") as header_file:
-    header = header_file.read()
-    for a in global_aliases:
-        if a in header:
-            header = header.replace(a, os.popen(global_aliases_dict[a]).read())
-    print header
+	print tab_in(alias_replace(header_file.read(), global_dict), 2)
 
-block = open('block-theme/block.html', 'r').read()
-tmpblock = block
-for f in valid:
-    aliases = global_aliases
-    aliases_dict = global_aliases_dict
-    aliases_dict["%link%"] = "echo " + f
-    print "<div>"
-    try:
-        with open(f+"/block-local") as local:
-            for line in local:
-                aliases.append(line.split(":")[0])
-                aliases_dict[line.split(":")[0]] = line.split(":")[1]
-    except:
-        os.system("touch \"" + f + "/block-local\"")
-    for a in aliases:
-        if a in tmpblock:
-            tmpblock = tmpblock.replace(a, os.popen(aliases_dict[a]).read())
-    print tmpblock
-    print "</div>"
-    tmpblock = block
+# Output the blocks
+with open("block-theme/block.html") as b:
+	block = b.read()
+	for directory in valid_directories:
+		local_dict = {
+			"%link%": "echo " + directory
+		}
+		print "\t\t<div>"
+		try:
+			with open(directory + "/block-local") as local:
+				for line in local:
+					tag, command = line.split(":")
+					local_dict[tag] = command
+			print tab_in(alias_replace(block, local_dict), 3)
+		except IOError:
+			print "\t\t\tNo block-local found for " + directory + "."
+		print "\t\t</div>"
 
+# Output footer.html
 with open("block-theme/footer.html") as footer_file:
-    footer = footer_file.read()
-    for a in global_aliases:
-        if a in footer:
-            footer = footer.replace(a, os.popen(global_aliases_dict[a]).read())
-    print footer
+	print tab_in(alias_replace(footer_file.read(), global_dict), 2)
+
+# Finsh the HTML document
+print """\t</body>
+</html>"""
+
+
