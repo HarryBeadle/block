@@ -7,10 +7,24 @@
 # www.harrybeadle.co.uk
 
 import os
+import glob
+from time import time
+
+###################
+### UI Elements ###
+###################
+
+okay = "[OKY]"
+warn = "[WRN]"
+err  = "[ERR]"
+st_time = time()
 
 ########################
 ### Define functions ###
 ########################
+
+def html_comment(string):
+	return "<!-- " + string + " -->"
 
 def alias_replace(content, alias_dict):
 	# Replaces tags with aliases from alias_dict in content
@@ -40,8 +54,10 @@ global_dict = {
 }
 with open("block-global") as block_global:
 	for line in block_global:
-		tag, command = line.split(":")
+		tag, command = line.split(":", 1)
 		global_dict[tag] = command
+
+print okay, "Imported block-global"
 
 # Get a list of valid subdirectories
 valid_directories = []
@@ -55,25 +71,34 @@ with open("block-ignore") as ignored_directories:
 		if directory in valid_directories:
 			valid_directories.remove(directory)
 
+print okay, "Got valid subdirectories"
+
+# Get a list of block link (.bl) files
+block_links = glob.glob('*.bl')
+print okay, "Got block link files"
+
 ################################
 ### Output the HTML document ###
 ################################
 
+print okay, "Genorating index.html"
+
+index = open("index.html", "w")
+
 # Start the HTML document
-print """<html>
-\t<head>"""
+index.write("""<html>
+\t<head>""")
 
 # Output head.html
 with open("block-theme/head.html") as head_file:
-	print tab_in(alias_replace(head_file.read(), global_dict), 2)
+	index.write(tab_in(alias_replace(head_file.read(), global_dict), 2))
 
 # Finish the <head> and start the <body>
-print """\t</head>
-	<body>"""
+index.write("""\t</head>\n\t<body>""")
 
 # Output header.html
 with open("block-theme/header.html") as header_file:
-	print tab_in(alias_replace(header_file.read(), global_dict), 2)
+	index.write(tab_in(alias_replace(header_file.read(), global_dict), 2))
 
 # Output the blocks
 with open("block-theme/block.html") as b:
@@ -82,23 +107,33 @@ with open("block-theme/block.html") as b:
 		local_dict = {
 			"%link%": "echo " + directory
 		}
-		print "\t\t<div>"
+		index.write("\t\t<div>")
 		try:
 			with open(directory + "/block-local") as local:
 				for line in local:
-					tag, command = line.split(":")
+					tag, command = line.split(":", 1)
 					local_dict[tag] = command
-			print tab_in(alias_replace(block, local_dict), 3)
+			index.write(tab_in(alias_replace(block, local_dict), 3))
 		except IOError:
-			print "\t\t\tNo block-local found for " + directory + "."
-		print "\t\t</div>"
+			print err, "No block-local found for " + directory + "."
+		index.write("\t\t</div>")
+	for block_link in block_links:
+		local_dict = {}
+		index.write("\t\t<div>")
+		with open(block_link) as bl:
+			for line in bl:
+				tag, command = line.split(":", 1)
+				local_dict[tag] = command
+			index.write(tab_in(alias_replace(block, local_dict), 3))
+		index.write("\t\t</div>")
 
 # Output footer.html
 with open("block-theme/footer.html") as footer_file:
-	print tab_in(alias_replace(footer_file.read(), global_dict), 2)
+	index.write(tab_in(alias_replace(footer_file.read(), global_dict), 2))
 
 # Finsh the HTML document
-print """\t</body>
-</html>"""
+index.write("""\t</body>\n\t</html>""")
 
+index.close()
 
+print okay, "index.html genorated in", str(time() - st_time) + "s"
