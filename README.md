@@ -1,31 +1,36 @@
-# Block
-A simple, hackable static site generator for portfolio websites.
+# Block: A Hackable Static Portfolio Site Genorator
 
-## How does it work?
+Information about block is available on it's website.
 
-Many static site genorators are available but they are mostly focused on blogs. I wanted a genorator that would support my project based portfolio website.
+> Block is a static site generator geared towards portfolio websites. I started it when I got annoyed that most static site generators are all blog based and wouldn't do what I want them to do without some serious hacking, so I made one myself, which as well as being better for portfolios is also easier to hack with built-in scripting and shell support.
+How is it different?
+Block is a different take on static site generation. It's geared towards portfolios rather then blogs. It's meant to be a list of the things that you're proud of. The way block achieves this is by creating an index of all the subdirectories in your server's directory. You can see it working here.
 
-Heres how `block` works; each subdirectory genorates its own block, a `div` on the page. You can customise the content of each block with local aliases in the form `%tag%`. The tag is replaced with the output of the shell command following it in the `block-local` file in the subdirectory:
+## Getting Started
+Getting started is easy, all you need to do is drop each of your project's folders into the server's directory and run the following.
+
+    python block.py
+
+That will generate an `index.html` in that same directory. It may look a little bear at the moment, this is because you have to fill in the data about each page in a `block-local` file. They look like this:
+
+    %tag%: echo "Command Goes Here"
+
+In this example alias all occurrences of `%tag%` will be replaced with `Command Goes Here`. You can use more than just `echo` though, for example you can make a `%date%` tag that will replace the tag with the date and time when the script was run:
 
     %date%: date
-    %name%: echo "Harry Beadle"
-    %lang$: echo "Python"
-    %desc%: echo "My Project"
 
-Each alias will be replaced when the site is genorated. This allows you to specify proect names and descriptions, as well as dynamic aliases in your own scripting language or in the shell.
+There are two types of block-aliases: `block-local` and `block-global`. `block-local` alias files are applied to only a single block in a directory, whereas the `block-global` aliases are applied to the whole document.
 
-The layout and style of the blocks are defined in `block.html` and `style.css`. Above and below the blocks are the header and footer, defined in `header.html` and `footer.html` respectivly.
+## What if I want to link to a page that isn't on my server?
 
-There are also global aliases that are applied to the final `index.html`, these are defined in a file `block-global` that is in the main directory.
+Then you can use block link files. Instead of a directory with a `block-local` file you can also use `.bl` files. These have the same format but specify a `%link%` and are in the root directory of the server.
 
-## How do I set it up?
+    %link%: echo "http://url.com"
 
-Simply put the `block-theme`, `block-global`, `block-ignore` and `block.py` files and folders into the directory you want to serve from. Run `block.py` for the first time and it will create `block-local` files in each of the directories.
+## Themes and customisation
 
-All you have to do is fill in the information for each directory and the global aliases and add any folders you do not want to index into the `block-ignore` file.
+Because Block is a relatively new piece of software there aren't many themes available. However, if you know HTML/CSS you can customise it yourself with the documents in the `block-theme` directory - remember to run the script again each time you make a change.
 
-Then run it once more to genorate your finished site.
+## Can I help?
 
-## How do I customise it?
-
-You can build your theme by changing the files in the `block-theme` directory.
+Yes! Block is open source so the best help you can give is some code. You can also make themes (which if you [email me](mailto:harry.beadle@gmail.com) I can put on this website for you. If you find anything wrong, or think of an improvement then please add it to the issues part of the GitHub page.
